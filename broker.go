@@ -743,6 +743,7 @@ func (b *Broker) sendAndReceiveSASLPlainHandshake() error {
 
 	err = b.conn.SetWriteDeadline(time.Now().Add(b.conf.Net.WriteTimeout))
 	if err != nil {
+		Logger.Printf("fail to set WriteDeadline when doing SASL handshake : %s\n", err.Error())
 		return err
 	}
 
@@ -754,6 +755,11 @@ func (b *Broker) sendAndReceiveSASLPlainHandshake() error {
 		return err
 	}
 	b.correlationID++
+	err = b.conn.SetReadDeadline(time.Now().Add(b.conf.Net.ReadTimeout))
+	if err != nil {
+		Logger.Printf("fail to set ReadDeadline when doing SASL handshake : %s\n", err.Error())
+		return err
+	}
 	//wait for the response
 	header := make([]byte, 8) // response header
 	_, err = io.ReadFull(b.conn, header)
@@ -828,6 +834,11 @@ func (b *Broker) sendAndReceiveSASLPlainAuth() error {
 		return err
 	}
 
+	err = b.conn.SetReadDeadline(time.Now().Add(b.conf.Net.ReadTimeout))
+	if err != nil {
+		Logger.Printf("Failed to set read deadline when doing SASL auth with broker : %s\n", err.Error())
+		return err
+	}
 	header := make([]byte, 4)
 	n, err := io.ReadFull(b.conn, header)
 	b.updateIncomingCommunicationMetrics(n, time.Since(requestTime))
